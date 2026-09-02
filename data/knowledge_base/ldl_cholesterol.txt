@@ -1,0 +1,15 @@
+LDL Cholesterol
+
+Low-density lipoprotein (LDL) cholesterol is a type of cholesterol-containing lipoprotein that carries cholesterol through the bloodstream.
+
+LDL cholesterol is commonly discussed in relation to cardiovascular health because higher LDL levels are associated with increased cardiovascular risk over time.
+
+LDL levels can be influenced by diet, physical activity, genetics, medications, and other factors.
+
+The interpretation of LDL cholesterol depends on the individual's overall cardiovascular risk and clinical context.
+
+For this application, the patient's result should first be compared with the reference range stated in the laboratory report.
+
+A single LDL measurement does not by itself determine an individual's overall cardiovascular risk.
+
+This information is educational and does not constitute a medical diagnosis.

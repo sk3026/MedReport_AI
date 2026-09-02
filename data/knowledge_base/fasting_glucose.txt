@@ -1,0 +1,13 @@
+Fasting Blood Glucose
+
+Fasting blood glucose measures the amount of glucose in the blood after fasting, typically for at least 8 hours.
+
+Glucose is the body's primary source of energy. The body regulates blood glucose using hormones such as insulin.
+
+Higher-than-expected fasting glucose levels can occur with impaired glucose regulation and diabetes. Lower glucose levels can occur for several reasons, including prolonged fasting or glucose-lowering treatment.
+
+A laboratory result should be interpreted using the reference range provided by the laboratory report. A single abnormal glucose result does not by itself establish a diagnosis.
+
+Common factors that can influence glucose levels include food intake, physical activity, stress, illness, and medications.
+
+This information is educational and does not constitute a medical diagnosis.

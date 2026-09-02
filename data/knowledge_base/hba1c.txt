@@ -1,0 +1,13 @@
+Hemoglobin A1c (HbA1c)
+
+HbA1c measures the percentage of hemoglobin in red blood cells that has glucose attached to it.
+
+Because red blood cells circulate for several months, HbA1c provides information about average blood glucose levels over approximately the previous 2 to 3 months.
+
+Higher HbA1c values generally indicate higher average blood glucose exposure.
+
+HbA1c can be affected by conditions that change red blood cell lifespan, including some forms of anemia and certain blood disorders.
+
+Interpret HbA1c using the laboratory's stated reference information and the patient's clinical context. A laboratory result alone should not be treated as a diagnosis.
+
+This information is educational and does not constitute a medical diagnosis.

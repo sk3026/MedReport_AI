@@ -1,0 +1,15 @@
+White Blood Cell Count
+
+White blood cells (WBCs) are part of the immune system and help the body respond to infections and other processes.
+
+The white blood cell count measures the number of white blood cells in a given volume of blood.
+
+A higher WBC count can occur with infections, inflammation, stress, certain medications, and other conditions.
+
+A lower WBC count can occur for various reasons, including some infections, medications, nutritional problems, and conditions affecting blood-cell production.
+
+The total WBC count should be interpreted together with the differential count when available, clinical information, and the laboratory reference range.
+
+An abnormal WBC count does not by itself identify a specific disease.
+
+This information is educational and does not constitute a medical diagnosis.

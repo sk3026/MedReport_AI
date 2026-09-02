@@ -1,0 +1,15 @@
+HDL Cholesterol
+
+High-density lipoprotein (HDL) cholesterol is involved in transporting cholesterol through the bloodstream.
+
+HDL cholesterol is often described as "good cholesterol" because higher levels are generally associated with more favorable cardiovascular risk profiles.
+
+HDL levels can be influenced by genetics, physical activity, body composition, smoking, diet, and other factors.
+
+HDL should be interpreted as one component of a complete lipid profile rather than as an isolated measure of cardiovascular health.
+
+For this application, the patient's result should first be compared with the reference range stated in the laboratory report.
+
+A single HDL measurement does not by itself determine an individual's overall cardiovascular risk.
+
+This information is educational and does not constitute a medical diagnosis.
