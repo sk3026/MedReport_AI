@@ -7,7 +7,7 @@ retrieves relevant medical knowledge, and generates context-aware responses
 using a large language model.
 
 The system is designed with a modular backend, React frontend, vector-based
-retrieval, and container-ready deployment architecture.
+retrieval, and REST API architecture.
 
 > **Medical Disclaimer:** MedReport AI is intended for educational and
 > informational purposes. It is not a medical diagnostic system and should
@@ -20,7 +20,8 @@ retrieval, and container-ready deployment architecture.
 MedReport AI combines:
 
 - Medical PDF processing
-- Report validation and summarization
+- Report validation
+- Report summarization
 - Semantic search
 - Local vector embeddings
 - FAISS vector retrieval
@@ -29,7 +30,6 @@ MedReport AI combines:
 - Response safety checking
 - React-based user interface
 - FastAPI REST API
-- Containerized deployment
 
 The system follows this general pipeline:
 
@@ -88,31 +88,29 @@ Final Response
                 │              │              │
                 ▼              ▼              ▼
          PDF Processing    RAG Pipeline   Safety Layer
-                │              │
-                │              ▼
-                │       ┌──────────────┐
-                │       │ Sentence     │
-                │       │ Transformer  │
-                │       └──────┬───────┘
-                │              │
-                │              ▼
-                │       ┌──────────────┐
-                │       │    FAISS     │
-                │       │ Vector Store │
-                │       └──────┬───────┘
-                │              │
-                │              ▼
-                │       Retrieved Context
-                │              │
-                └──────┬───────┘
-                       │
-                       ▼
-                 ┌─────────────┐
-                 │   LLM API   │
-                 └──────┬──────┘
-                        │
-                        ▼
-                 Generated Answer
+                               │
+                               ▼
+                       ┌──────────────┐
+                       │ Sentence     │
+                       │ Transformer  │
+                       └──────┬───────┘
+                              │
+                              ▼
+                       ┌──────────────┐
+                       │    FAISS     │
+                       │ Vector Store │
+                       └──────┬───────┘
+                              │
+                              ▼
+                      Retrieved Context
+                              │
+                              ▼
+                       ┌──────────────┐
+                       │    LLM API   │
+                       └──────┬───────┘
+                              │
+                              ▼
+                       Generated Answer
 ```
 
 ---
@@ -217,9 +215,10 @@ Final Response
 
 ## Deployment
 
-- Docker
-- Docker Compose
-- AWS-compatible container infrastructure
+- AWS
+- Amazon S3
+- Amazon CloudFront
+- Amazon EC2
 
 ---
 
@@ -462,7 +461,7 @@ FAISS
 
 FAISS is used for semantic similarity search.
 
-The existing vector index consists of:
+The vector index consists of:
 
 ```text
 vectorstore/
@@ -471,7 +470,7 @@ vectorstore/
 ```
 
 The retrieval configuration uses a configurable number of relevant
-documents/chunks.
+documents or chunks.
 
 ---
 
@@ -525,7 +524,7 @@ GET /health
 
 Used to verify that the API is available.
 
-Example:
+Example response:
 
 ```json
 {
@@ -624,6 +623,12 @@ Start the API:
 uvicorn backend.api.main:app --host 0.0.0.0 --port 8000
 ```
 
+The backend will be available at:
+
+```text
+http://localhost:8000
+```
+
 ---
 
 ## Frontend
@@ -646,6 +651,8 @@ Start the development server:
 npm run dev
 ```
 
+The frontend will be available at the URL shown by Vite.
+
 ---
 
 # Production Build
@@ -663,103 +670,63 @@ The production files are generated in:
 frontend/dist/
 ```
 
-The production frontend should be served through a production web server
-or static hosting platform.
+The production frontend can be served through a static hosting service
+or web server.
 
----
-
-# Docker Deployment
-
-The application is designed to support containerized deployment.
-
-Recommended production structure:
-
-```text
-                    Internet
-                       │
-                       ▼
-                Reverse Proxy
-                 /           \
-                /             \
-               ▼               ▼
-        Frontend Container   Backend Container
-                                  │
-                     ┌────────────┼────────────┐
-                     │            │            │
-                     ▼            ▼            ▼
-              SentenceModel    FAISS       LLM API
-```
-
-The frontend and backend should be deployed as separate containers.
-
----
-
-## Backend Container
-
-Recommended production command:
+The backend can be started using:
 
 ```bash
 uvicorn backend.api.main:app --host 0.0.0.0 --port 8000
 ```
 
-The container should expose:
+---
 
-```text
-8000
-```
+# Deployment
+
+The application consists of a React frontend and a FastAPI backend.
+
+The frontend is built as a production static application and can be served
+using a static hosting service or web server.
+
+The backend runs using Uvicorn and exposes the FastAPI REST API.
+
+A production deployment should use HTTPS and secure environment-variable
+management.
+
+The application is designed to be deployable on cloud infrastructure.
 
 ---
 
-## Frontend Container
+# AWS Deployment Architecture
 
-The frontend should first be built using:
-
-```bash
-npm run build
-```
-
-The generated static files can then be served by a production web server
-such as Nginx.
-
----
-
-# Docker Compose
-
-A production deployment can use Docker Compose to manage the frontend and
-backend services.
-
-Example structure:
+A production AWS deployment can follow this architecture:
 
 ```text
-docker/
-├── backend/
-│   └── Dockerfile
-│
-└── frontend/
-    ├── Dockerfile
-    └── nginx.conf
-
-docker-compose.yml
+                         Internet
+                            │
+                            ▼
+                     CloudFront
+                            │
+              ┌─────────────┴─────────────┐
+              │                           │
+              ▼                           ▼
+         Static Frontend             Backend API
+              │                           │
+              ▼                           ▼
+             S3                         EC2
+                                          │
+                              ┌───────────┼───────────┐
+                              │           │           │
+                              ▼           ▼           ▼
+                       Embedding Model   FAISS      LLM API
 ```
 
-Example service architecture:
+The frontend is hosted as a static application.
 
-```text
-docker-compose
-      │
-      ├── frontend
-      │      │
-      │      └── Nginx
-      │
-      └── backend
-             │
-             ├── FastAPI
-             ├── SentenceTransformer
-             └── FAISS
-```
+The backend runs as a FastAPI application.
 
-Environment variables should be supplied through the deployment environment
-or a secure secrets mechanism rather than being baked into container images.
+The frontend communicates with the backend through the configured API
+base URL.
 
 ---
 
@@ -771,11 +738,16 @@ Production deployments should use:
 HTTPS
  │
  ▼
-Reverse Proxy / Load Balancer
+Frontend / CDN
  │
- ├── Frontend
+ ▼
+Backend API
  │
- └── Backend API
+ ├── Embedding Model
+ │
+ ├── FAISS Vectorstore
+ │
+ └── LLM API
 ```
 
 The backend should listen on:
@@ -784,27 +756,8 @@ The backend should listen on:
 0.0.0.0:8000
 ```
 
-The public application should not expose internal service ports directly
-unless required by the infrastructure.
-
----
-
-# Container Best Practices
-
-Production containers should follow these principles:
-
-- Use a minimal Python base image.
-- Do not run containers as root where practical.
-- Keep secrets outside images.
-- Use `.dockerignore`.
-- Pin dependency versions.
-- Use health checks.
-- Keep frontend and backend containers separate.
-- Avoid storing temporary user files permanently inside containers.
-- Use persistent storage only where required.
-- Log to stdout/stderr for container orchestration.
-- Restart failed services automatically.
-- Scan container images for vulnerabilities.
+Environment-specific configuration should be supplied through environment
+variables.
 
 ---
 
@@ -824,7 +777,6 @@ Recommended controls include:
 - Encryption at rest
 - Strict file validation
 - File-size limits
-- Malware scanning
 - Rate limiting
 - Secure temporary file handling
 - Access logging
@@ -894,7 +846,7 @@ Health check:
 curl http://localhost:8000/health
 ```
 
-Expected:
+Expected response:
 
 ```json
 {
@@ -911,7 +863,6 @@ Production deployments should monitor:
 - API availability
 - Request latency
 - Error rates
-- Container health
 - CPU usage
 - Memory usage
 - Disk usage
@@ -948,125 +899,23 @@ Avoid logging:
 
 ---
 
-# Deployment Architecture
-
-A production AWS deployment can follow this architecture:
-
-```text
-                         Internet
-                            │
-                            ▼
-                    ┌──────────────┐
-                    │ CloudFront / │
-                    │ Load Balancer│
-                    └──────┬───────┘
-                           │
-              ┌────────────┴────────────┐
-              │                         │
-              ▼                         ▼
-       Static Frontend             Backend API
-              │                         │
-              ▼                         ▼
-             S3                     Container
-                                        │
-                           ┌────────────┼────────────┐
-                           │            │            │
-                           ▼            ▼            ▼
-                    Embedding Model   FAISS       LLM API
-```
-
-The exact infrastructure can be changed without changing the application
-architecture.
-
----
-
-# Deployment Principles
-
-The application is designed so that infrastructure can evolve from:
-
-```text
-Local Development
-       │
-       ▼
-Docker
-       │
-       ▼
-Docker Compose
-       │
-       ▼
-Cloud Container Platform
-```
-
-The application should not depend on a specific machine, IP address,
-or local development environment.
-
----
-
-# Production Environment
-
-A recommended production environment contains:
-
-```text
-Frontend
-    │
-    ▼
-HTTPS
-    │
-    ▼
-Reverse Proxy / CDN
-    │
-    ▼
-Backend API
-    │
-    ├── Local Embedding Model
-    │
-    ├── FAISS Vectorstore
-    │
-    └── External LLM Provider
-```
-
-This separation allows each component to be scaled or replaced
-independently.
-
----
-
-# Health Check
-
-The backend exposes:
-
-```http
-GET /health
-```
-
-This endpoint can be used by:
-
-- Docker health checks
-- Load balancers
-- Container orchestrators
-- Monitoring systems
-- Deployment systems
-
----
-
 # Development vs Production
 
 | Area | Development | Production |
 |---|---|---|
-| Frontend | Vite dev server | Static production build |
-| Backend | Uvicorn | Containerized FastAPI |
-| Configuration | `.env` | Secure environment/secrets |
+| Frontend | Vite development server | Production static build |
+| Backend | Uvicorn | Uvicorn / production server |
+| Configuration | `.env` | Secure environment variables |
 | HTTPS | Optional | Required |
 | Logs | Console | Centralized logging |
-| Storage | Local | Managed/persistent storage where required |
-| Scaling | Single process | Multiple instances if required |
-| Monitoring | Basic | Application + infrastructure monitoring |
-| Secrets | Local environment | Secret management system |
+| Storage | Local | Managed storage where required |
+| Scaling | Single instance | Multiple instances if required |
+| Monitoring | Basic | Application and infrastructure monitoring |
+| Secrets | Local environment | Secure secret management |
 
 ---
 
-# Project Flow
-
-The complete system can be summarized as:
+# Complete Application Flow
 
 ```text
                 USER
@@ -1092,7 +941,7 @@ The complete system can be summarized as:
                   │
                   ▼
           ┌───────────────┐
-          │    RAG        │
+          │     RAG       │
           │   Retrieval   │
           └───────┬───────┘
                   │
@@ -1106,7 +955,7 @@ The complete system can be summarized as:
                   │
                   ▼
           ┌───────────────┐
-          │   LLM API     │
+          │    LLM API    │
           └───────┬───────┘
                   │
                   ▼
@@ -1128,7 +977,7 @@ The complete system can be summarized as:
 
 # Future Enhancements
 
-Potential production improvements include:
+Potential future improvements include:
 
 - User authentication and authorization
 - Persistent conversation storage
@@ -1140,6 +989,7 @@ Potential production improvements include:
 - Retrieval evaluation
 - Automated testing
 - CI/CD
+- Containerized deployment
 - Container orchestration
 - Horizontal scaling
 - Centralized logging
