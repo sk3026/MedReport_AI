@@ -1,1116 +1,1266 @@
-MEDREPORT AI
-Medical Report Analysis & RAG Chatbot
-======================================
+# MedReport AI
 
-MedReport AI is a full-stack medical report analysis application that allows
-users to upload supported medical PDF reports, ask questions about the report,
-and receive context-aware answers using Retrieval-Augmented Generation (RAG).
+**AI-Powered Medical Report Analysis using RAG**
 
-The project combines a React frontend, FastAPI backend, PDF processing,
-FAISS-based vector retrieval, SentenceTransformer embeddings, and the Groq LLM.
+MedReport AI is a full-stack application that allows users to upload medical
+PDF reports, ask questions about them, and receive context-aware answers.
 
-IMPORTANT:
-This project is intended for educational and informational purposes.
-It is not a replacement for a qualified medical professional or medical
-diagnosis.
+The application uses **Retrieval-Augmented Generation (RAG)** to combine
+information from the uploaded report with relevant medical knowledge before
+generating an answer.
 
+> **Note:** This project is for educational and informational purposes only.
+> It is not a replacement for professional medical advice or diagnosis.
 
-------------------------------------------------------------
-FEATURES
-------------------------------------------------------------
+---
 
-- Upload medical reports in PDF format.
-- Validate supported medical report types.
-- Extract and process text from uploaded reports.
-- Generate report summaries.
-- Ask natural-language questions about uploaded reports.
-- Retrieve relevant medical knowledge using FAISS.
-- Generate context-aware answers using the Groq LLM.
-- Use SentenceTransformer locally on the backend for embeddings.
-- Maintain chat sessions for follow-up questions.
-- Apply a safety-checking layer before returning responses.
-- React + Vite frontend.
-- FastAPI REST backend.
-- AWS deployment using S3, CloudFront, and EC2.
-- Uvicorn managed using systemd for continuous backend operation.
+## Features
 
+- Upload medical reports in PDF format
+- Extract text from medical reports
+- Validate supported report types
+- Generate report summaries
+- Ask questions about uploaded reports
+- Retrieve relevant medical knowledge using FAISS
+- Generate answers using Groq LLM
+- Local text embeddings using SentenceTransformer
+- Follow-up chat using session-based conversations
+- Safety checking before returning responses
+- React frontend
+- FastAPI backend
+- AWS deployment
+- Automatic backend restart using systemd
 
-------------------------------------------------------------
-TECHNOLOGY STACK
-------------------------------------------------------------
+---
 
-FRONTEND
+## Technology
+
+### Frontend
+
 - React
 - Vite
 - JavaScript
 - Axios
 
-BACKEND
+### Backend
+
 - Python
 - FastAPI
 - Uvicorn
 
-RAG / AI
+### RAG
+
 - SentenceTransformers
-- all-MiniLM-L6-v2
+- `all-MiniLM-L6-v2`
 - FAISS
-- Groq API
 - LangChain text splitters
+- Groq API
 
-PDF / DATA PROCESSING
+### PDF Processing
+
 - PyMuPDF
-- Python data-processing utilities
 
-DEPLOYMENT
-- AWS EC2
-- AWS S3
-- AWS CloudFront
+### AWS
+
+- Amazon S3
+- Amazon CloudFront
+- Amazon EC2
 - AWS WAF
 - systemd
 
+---
 
-------------------------------------------------------------
-PROJECT STRUCTURE
-------------------------------------------------------------
+## Project Structure
 
+```text
 MedReport_AI/
-|
-+-- backend/
-|   |
-|   +-- api/
-|   |   +-- main.py
-|   |
-|   +-- ingestion/
-|   |   +-- parser.py
-|   |   +-- pdf.py
-|   |   +-- summary.py
-|   |   +-- validator.py
-|   |
-|   +-- knowledge/
-|   |   +-- chunking.py
-|   |   +-- documents.py
-|   |   +-- embeddings.py
-|   |   +-- vectorstore.py
-|   |
-|   +-- retrieval/
-|   |   +-- search.py
-|   |   +-- context.py
-|   |   +-- context_formatter.py
-|   |   +-- test_matcher.py
-|   |
-|   +-- generation/
-|   |   +-- llm.py
-|   |   +-- prompts.py
-|   |   +-- response.py
-|   |
-|   +-- safety/
-|   |   +-- checker.py
-|   |
-|   +-- config.py
-|   +-- models.py
-|   +-- pipeline.py
-|
-+-- data/
-|   +-- knowledge_base/
-|   +-- processed/
-|   +-- reports/
-|       +-- temp/
-|
-+-- vectorstore/
-|   +-- medical_knowledge.index
-|   +-- knowledge_documents.pkl
-|
-+-- frontend/
-|   +-- src/
-|   |   +-- App.jsx
-|   +-- public/
-|   +-- package.json
-|   +-- dist/
-|
-+-- tests/
-|
-+-- requirements.txt
-+-- .env
-+-- .env.example
-+-- .gitignore
-+-- README.md
-+-- package.json
+│
+├── backend/
+│   ├── api/
+│   │   └── main.py
+│   │
+│   ├── ingestion/
+│   │   ├── parser.py
+│   │   ├── pdf.py
+│   │   ├── summary.py
+│   │   └── validator.py
+│   │
+│   ├── knowledge/
+│   │   ├── chunking.py
+│   │   ├── documents.py
+│   │   ├── embeddings.py
+│   │   └── vectorstore.py
+│   │
+│   ├── retrieval/
+│   │   ├── search.py
+│   │   ├── context.py
+│   │   ├── context_formatter.py
+│   │   └── test_matcher.py
+│   │
+│   ├── generation/
+│   │   ├── llm.py
+│   │   ├── prompts.py
+│   │   └── response.py
+│   │
+│   ├── safety/
+│   │   └── checker.py
+│   │
+│   ├── config.py
+│   ├── models.py
+│   └── pipeline.py
+│
+├── data/
+│   ├── knowledge_base/
+│   ├── processed/
+│   └── reports/
+│       └── temp/
+│
+├── vectorstore/
+│   ├── medical_knowledge.index
+│   └── knowledge_documents.pkl
+│
+├── frontend/
+│   ├── src/
+│   │   └── App.jsx
+│   ├── public/
+│   ├── package.json
+│   └── dist/
+│
+├── tests/
+│
+├── requirements.txt
+├── .env
+├── .env.example
+├── .gitignore
+├── README.md
+└── package.json
+```
 
+---
 
-------------------------------------------------------------
-HOW THE APPLICATION WORKS
-------------------------------------------------------------
+## How It Works
 
-The application follows this overall flow:
+The complete application flow is:
 
-User
- |
- v
-React Frontend
- |
- | PDF + Question
- v
-FastAPI Backend
- |
- v
-PDF Processing
- |
- +--> Parse
- |
- +--> Validate
- |
- +--> Generate Summary
- |
- v
-Question Embedding
- |
- v
-FAISS Similarity Search
- |
- v
-Relevant Medical Knowledge
- |
- +----------------------------+
- |                            |
- v                            v
-Uploaded Report Context   Retrieved Knowledge
- |                            |
- +-------------+--------------+
-               |
-               v
-            Groq LLM
-               |
-               v
-          Safety Checker
-               |
-               v
-          Final Response
-               |
-               v
-         React Frontend
+```text
+                         USER
+                           │
+                           ▼
+                  ┌────────────────┐
+                  │ React Frontend │
+                  └───────┬────────┘
+                          │
+                    PDF + Question
+                          │
+                          ▼
+                  ┌────────────────┐
+                  │ FastAPI Server │
+                  └───────┬────────┘
+                          │
+                          ▼
+                  ┌────────────────┐
+                  │ PDF Processing │
+                  └───────┬────────┘
+                          │
+              ┌───────────┼───────────┐
+              │           │           │
+              ▼           ▼           ▼
+            Parse      Validate    Summary
+              │           │           │
+              └───────────┼───────────┘
+                          │
+                          ▼
+                    User Question
+                          │
+                          ▼
+              ┌─────────────────────┐
+              │ SentenceTransformer │
+              │ all-MiniLM-L6-v2    │
+              └──────────┬──────────┘
+                         │
+                    384-D Vector
+                         │
+                         ▼
+                  ┌─────────────┐
+                  │    FAISS    │
+                  └──────┬──────┘
+                         │
+                  Relevant Knowledge
+                         │
+                         ▼
+              ┌─────────────────────┐
+              │  Context Building   │
+              └──────────┬──────────┘
+                         │
+             ┌───────────┴───────────┐
+             │                       │
+             ▼                       ▼
+       Report Context       Medical Knowledge
+             │                       │
+             └───────────┬───────────┘
+                         │
+                         ▼
+                  ┌─────────────┐
+                  │   Groq LLM  │
+                  └──────┬──────┘
+                         │
+                         ▼
+                  ┌─────────────┐
+                  │ Safety Check│
+                  └──────┬──────┘
+                         │
+                         ▼
+                    Final Answer
+                         │
+                         ▼
+                  React Frontend
+                         │
+                         ▼
+                        USER
+```
 
+---
 
-------------------------------------------------------------
-RAG ARCHITECTURE
-------------------------------------------------------------
+## RAG Pipeline
 
-MedReport AI uses Retrieval-Augmented Generation (RAG).
+RAG stands for **Retrieval-Augmented Generation**.
 
-The RAG pipeline works as follows:
+Instead of sending only the user's question to the LLM, the application
+first retrieves relevant medical information and provides it as context.
 
-1. Medical knowledge is stored in the project's knowledge base.
+### Knowledge Preparation
 
-2. Large documents are divided into smaller chunks.
+```text
+Medical Documents
+       │
+       ▼
+    Chunking
+       │
+       ▼
+   Text Chunks
+       │
+       ▼
+SentenceTransformer
+       │
+       ▼
+  384-D Vectors
+       │
+       ▼
+      FAISS
+       │
+       ▼
+  Vectorstore
+```
 
-3. Each chunk is converted into a vector embedding using the
-   SentenceTransformer model:
+### User Question
 
-       all-MiniLM-L6-v2
+```text
+User Question
+      │
+      ▼
+SentenceTransformer
+      │
+      ▼
+Question Vector
+      │
+      ▼
+FAISS Search
+      │
+      ▼
+Top 5 Relevant Chunks
+      │
+      ▼
+Retrieved Context
+```
 
-4. The embeddings are stored in a FAISS vector index.
+### Answer Generation
 
-5. When the user asks a question, the question is also converted into
-   an embedding using the same SentenceTransformer model.
+```text
+Uploaded Report
+       +
+Retrieved Knowledge
+       +
+User Question
+       │
+       ▼
+    Groq LLM
+       │
+       ▼
+  Safety Check
+       │
+       ▼
+ Final Answer
+```
 
-6. FAISS performs similarity search between the question embedding and
-   the stored medical knowledge embeddings.
+---
 
-7. The most relevant knowledge chunks are retrieved.
+## Embeddings
 
-8. The retrieved knowledge is combined with information from the uploaded
-   medical report and the user's question.
+The project uses the following SentenceTransformer model:
 
-9. This context is sent to the Groq LLM.
+```text
+all-MiniLM-L6-v2
+```
 
-10. The LLM generates a context-aware response.
+The model generates:
 
-11. The generated response passes through the safety-checking layer.
+```text
+384-dimensional embeddings
+```
 
-12. The final response is returned to the React frontend.
+The SentenceTransformer model runs **locally on the backend EC2 server**.
 
+This means embedding generation does not require a separate external
+embedding API.
 
-The core RAG flow is:
+The process is:
 
-    User Question
-         |
-         v
-    SentenceTransformer
-         |
-         v
-    384-Dimensional Embedding
-         |
-         v
-    FAISS Similarity Search
-         |
-         v
-    Relevant Medical Context
-         |
-         +----------------------+
-         |                      |
-         v                      v
-    Report Information     Retrieved Knowledge
-         |                      |
-         +----------+-----------+
-                    |
-                    v
-                 Groq LLM
-                    |
-                    v
-              Safety Checker
-                    |
-                    v
-                Answer
+```text
+Text
+ │
+ ▼
+all-MiniLM-L6-v2
+ │
+ ▼
+384-Dimensional Vector
+ │
+ ▼
+FAISS
+```
 
+---
 
-------------------------------------------------------------
-EMBEDDING MODEL
-------------------------------------------------------------
+## Vector Database
 
-The project uses SentenceTransformers to generate vector embeddings for
-medical knowledge and user queries.
-
-Model:
-
-    all-MiniLM-L6-v2
-
-Embedding dimension:
-
-    384
-
-The SentenceTransformer model runs locally on the backend server (EC2).
-
-It converts text into 384-dimensional vectors, which are then used by
-FAISS for similarity search.
-
-The embedding process is:
-
-    Text
-      |
-      v
-    all-MiniLM-L6-v2
-      |
-      v
-    384-dimensional embedding
-      |
-      v
-    FAISS similarity search
-
-Unlike the LLM, embedding generation does not require an external API call.
-The model runs directly on the backend server.
-
-The existing FAISS vectorstore is stored locally:
-
-    vectorstore/medical_knowledge.index
-    vectorstore/knowledge_documents.pkl
-
-
-------------------------------------------------------------
-VECTOR DATABASE
-------------------------------------------------------------
-
-The project uses FAISS for vector similarity search.
-
-FAISS stands for Facebook AI Similarity Search.
+The project uses **FAISS** for vector similarity search.
 
 The vectorstore contains:
 
-    medical_knowledge.index
-    knowledge_documents.pkl
+```text
+vectorstore/
+├── medical_knowledge.index
+└── knowledge_documents.pkl
+```
 
-The FAISS index is used to efficiently find medical knowledge that is
-semantically similar to the user's question.
+When a user asks a question, the question is converted into an embedding
+and compared with the stored embeddings.
 
-The configured number of retrieved results is:
+The application retrieves the most relevant knowledge chunks.
 
-    top_k = 5
+Current configuration:
 
+```text
+Top K = 5
+```
 
-------------------------------------------------------------
-KNOWLEDGE PROCESSING
-------------------------------------------------------------
+---
 
-Medical knowledge is processed before being stored in the vectorstore.
+## Medical Knowledge
 
-The general process is:
+The knowledge processing pipeline is:
 
-    Medical Documents
-          |
-          v
-       Chunking
-          |
-          v
-    Text Chunks
-          |
-          v
-    SentenceTransformer
-          |
-          v
-     Embeddings
-          |
-          v
-        FAISS
-          |
-          v
-    Vectorstore
+```text
+Medical Documents
+       │
+       ▼
+     Chunk
+       │
+       ▼
+    Embed
+       │
+       ▼
+    Store
+       │
+       ▼
+     FAISS
+```
 
+Current chunk configuration:
 
-Chunk configuration:
+```text
+Chunk Size    = 700
+Chunk Overlap = 100
+```
 
-    Chunk size: 700
-    Chunk overlap: 100
+---
 
+## Report Processing
 
-------------------------------------------------------------
-INGESTION LAYER
-------------------------------------------------------------
+Uploaded reports are processed through the ingestion layer.
 
-Location:
+```text
+PDF
+ │
+ ▼
+Extract Text
+ │
+ ▼
+Parse
+ │
+ ▼
+Validate
+ │
+ ▼
+Generate Summary
+```
 
-    backend/ingestion/
+The ingestion code is located in:
 
-Files:
+```text
+backend/ingestion/
+```
 
-    parser.py
-    pdf.py
-    summary.py
-    validator.py
+### Main Files
 
-Responsibilities:
+| File | Purpose |
+|---|---|
+| `pdf.py` | PDF processing and text extraction |
+| `parser.py` | Parse report information |
+| `validator.py` | Validate the report |
+| `summary.py` | Generate report summary |
 
-pdf.py
-    Handles PDF-related processing and text extraction.
+---
 
-parser.py
-    Processes extracted report information into a usable structure.
+## Retrieval
 
-validator.py
-    Validates whether the uploaded document is a supported medical report.
+The retrieval code is located in:
 
-summary.py
-    Generates a summary of the uploaded report.
+```text
+backend/retrieval/
+```
 
-The ingestion flow is:
+Main responsibilities:
 
-    PDF
-     |
-     v
-    Text Extraction
-     |
-     v
-    Parsing
-     |
-     v
-    Validation
-     |
-     v
-    Summary
+- Convert questions into embeddings
+- Search the FAISS index
+- Find relevant medical knowledge
+- Prepare retrieved context
+- Format context for the LLM
 
+Main files:
 
-------------------------------------------------------------
-RETRIEVAL LAYER
-------------------------------------------------------------
+```text
+search.py
+context.py
+context_formatter.py
+test_matcher.py
+```
 
-Location:
+---
 
-    backend/retrieval/
+## Answer Generation
 
-Files:
+The generation code is located in:
 
-    search.py
-    context.py
-    context_formatter.py
-    test_matcher.py
+```text
+backend/generation/
+```
 
-Responsibilities:
+Main files:
 
-- Convert the user question into an embedding.
-- Search the FAISS vectorstore.
-- Retrieve relevant medical knowledge.
-- Build the context used by the LLM.
-- Format retrieved information for generation.
-
-
-Retrieval flow:
-
-    User Question
-         |
-         v
-    Embedding
-         |
-         v
-    FAISS
-         |
-         v
-    Similarity Search
-         |
-         v
-    Top 5 Relevant Chunks
-         |
-         v
-    Retrieved Context
-
-
-------------------------------------------------------------
-GENERATION LAYER
-------------------------------------------------------------
-
-Location:
-
-    backend/generation/
-
-Files:
-
-    llm.py
-    prompts.py
-    response.py
-
-The generation layer communicates with the Groq API.
+```text
+llm.py
+prompts.py
+response.py
+```
 
 The LLM receives:
 
-- User question
-- Uploaded report information
-- Retrieved medical knowledge
-- Prompt instructions
+```text
+User Question
+      +
+Medical Report Context
+      +
+Retrieved Knowledge
+      +
+Prompt Instructions
+```
 
-The generation flow is:
+The combined information is sent to the Groq API.
 
-    Question
-       +
-    Report Context
-       +
-    Retrieved Knowledge
-       +
-    Prompt
-       |
-       v
-    Groq LLM
-       |
-       v
-    Generated Response
+---
 
+## Safety
 
-------------------------------------------------------------
-SAFETY LAYER
-------------------------------------------------------------
+The safety layer is located in:
 
-Location:
+```text
+backend/safety/checker.py
+```
 
-    backend/safety/checker.py
+The generated response passes through the safety checker before being
+returned to the user.
 
-The generated response is passed through a safety-checking layer before
-being returned to the user.
+```text
+Groq Response
+      │
+      ▼
+Safety Check
+      │
+      ▼
+Final Response
+```
 
-This layer is especially important because the application deals with
-medical information.
+---
 
-General flow:
+## Supported Reports
 
-    LLM Response
-         |
-         v
-    Safety Checker
-         |
-         v
-    Final Response
+Currently supported report types include:
 
+```text
+CBC
+Glucose
+Lipid Profile
+Liver Function
+Kidney Function
+Thyroid
+```
 
-------------------------------------------------------------
-SUPPORTED REPORT TYPES
-------------------------------------------------------------
+Supported file format:
 
-The current configuration supports:
+```text
+PDF
+```
 
-- CBC
-- Glucose
-- Lipid Profile
-- Liver Function
-- Kidney Function
-- Thyroid
+---
 
-Supported file type:
+# API
 
-    .pdf
+## Base URL
 
+### Local
 
-------------------------------------------------------------
-BACKEND API
-------------------------------------------------------------
+```text
+http://127.0.0.1:8000
+```
 
-Base URL for local development:
+### Production
 
-    http://127.0.0.1:8000
+```text
+https://dwtdehq0kif0o.cloudfront.net
+```
 
-Available endpoints:
+---
 
+## Endpoints
+
+### GET /
+
+Basic API information.
+
+```text
 GET /
-    Returns basic API information.
+```
 
+### GET /health
+
+Checks whether the backend is running.
+
+```text
 GET /health
-    Health check endpoint used to verify that the backend is running.
+```
 
+Example response:
+
+```json
+{
+  "status": "healthy"
+}
+```
+
+### POST /analyze
+
+Uploads a medical report and asks the initial question.
+
+```text
 POST /analyze
-    Uploads a medical PDF report and processes the initial question.
+```
 
+The request contains:
+
+```text
+file
+question
+```
+
+### POST /chat
+
+Continues an existing chat session.
+
+```text
 POST /chat
-    Continues an existing analysis session and handles follow-up questions.
+```
 
+---
 
-------------------------------------------------------------
-RUNNING THE BACKEND LOCALLY
-------------------------------------------------------------
+# Local Setup
 
-1. Create a Python virtual environment.
+## 1. Clone the Project
 
-Windows:
+```bash
+git clone https://github.com/sk3026/MedReport_AI.git
+cd MedReport_AI
+```
 
-    python -m venv .venv
+---
 
-Activate it:
+## 2. Create Python Environment
 
-    .venv\Scripts\activate
+### Windows
 
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+```
 
-Linux / macOS:
+### Linux
 
-    python -m venv .venv
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
 
-Activate it:
+---
 
-    source .venv/bin/activate
+## 3. Install Backend Dependencies
 
+```bash
+pip install -r requirements.txt
+```
 
-2. Install dependencies:
+---
 
-    pip install -r requirements.txt
+## 4. Configure Environment Variables
 
+Create:
 
-3. Create a .env file in the project root.
+```text
+.env
+```
 
-Example:
+Add:
 
-    GROQ_API_KEY=your_groq_api_key_here
+```text
+GROQ_API_KEY=your_groq_api_key_here
+```
 
+Do not commit the real `.env` file to GitHub.
 
-4. Start the FastAPI server:
+---
 
-    uvicorn backend.api.main:app --host 0.0.0.0 --port 8000
+# Run Backend
 
+Start FastAPI with:
 
-5. Test the backend:
+```bash
+uvicorn backend.api.main:app --host 0.0.0.0 --port 8000
+```
 
-    http://127.0.0.1:8000/health
+Test:
 
-Expected response:
+```text
+http://127.0.0.1:8000/health
+```
 
-    {"status":"healthy"}
+Expected:
 
+```json
+{
+  "status": "healthy"
+}
+```
 
-------------------------------------------------------------
-RUNNING THE FRONTEND LOCALLY
-------------------------------------------------------------
+---
 
-Go to the frontend directory:
+# Run Frontend
 
-    cd frontend
+Move into the frontend directory:
 
+```bash
+cd frontend
+```
 
-Install dependencies:
+Install packages:
 
-    npm install
-
+```bash
+npm install
+```
 
 Start the development server:
 
-    npm run dev
+```bash
+npm run dev
+```
 
+The frontend normally runs at:
 
-The Vite development server normally runs at:
+```text
+http://localhost:5173
+```
 
-    http://localhost:5173
+---
 
-
-------------------------------------------------------------
-FRONTEND ENVIRONMENT VARIABLES
-------------------------------------------------------------
+# Frontend Configuration
 
 For local development:
 
-    VITE_API_URL=http://127.0.0.1:8000
-
+```text
+VITE_API_URL=http://127.0.0.1:8000
+```
 
 For production:
 
-    VITE_API_URL=https://dwtdehq0kif0o.cloudfront.net
+```text
+VITE_API_URL=https://dwtdehq0kif0o.cloudfront.net
+```
 
+After changing `VITE_API_URL`, rebuild the frontend:
 
-IMPORTANT:
+```bash
+npm run build
+```
 
-Vite embeds VITE_* variables into the frontend during the build process.
+---
 
-Therefore, after changing .env.production, rebuild the frontend:
+# AWS Deployment
 
-    npm run build
+The production architecture is:
 
-
-------------------------------------------------------------
-AWS DEPLOYMENT ARCHITECTURE
-------------------------------------------------------------
-
-The application is deployed on AWS using S3, CloudFront, and EC2.
-
-Production architecture:
-
+```text
                          INTERNET
-                             |
-                             v
-                     AWS CLOUDFRONT
-                         HTTPS
-                       /       \
-                      /         \
-                     v           v
-                    S3          EC2
-               React Frontend  FastAPI
-                                  |
-                                  v
-                            SentenceTransformer
-                                  |
-                                  v
-                                FAISS
-                                  |
-                                  v
-                              Groq API
+                             │
+                             ▼
+                      ┌─────────────┐
+                      │ CloudFront  │
+                      │   HTTPS     │
+                      └──────┬──────┘
+                             │
+                 ┌───────────┴───────────┐
+                 │                       │
+                 ▼                       ▼
+          ┌─────────────┐         ┌─────────────┐
+          │     S3      │         │     EC2     │
+          │   Frontend  │         │   Backend   │
+          └─────────────┘         └──────┬──────┘
+                                         │
+                              ┌──────────┼──────────┐
+                              │          │          │
+                              ▼          ▼          ▼
+                       SentenceModel  FAISS      Groq
+```
 
+---
 
-CloudFront routing:
+## AWS Frontend
 
-    /              -> S3 React frontend
-    /analyze       -> EC2 FastAPI
-    /chat          -> EC2 FastAPI
+The React application is built using:
 
+```bash
+npm run build
+```
 
-This architecture allows the frontend and backend API to use the same
-HTTPS CloudFront domain.
+The generated files are stored in:
 
+```text
+frontend/dist/
+```
 
-------------------------------------------------------------
-AWS FRONTEND DEPLOYMENT
-------------------------------------------------------------
-
-The production React application is built using:
-
-    npm run build
-
-
-The generated files are located in:
-
-    frontend/dist/
-
-
-The contents of the dist directory are uploaded to the S3 frontend bucket.
-
-The S3 bucket is kept private and is accessed through CloudFront using
-Origin Access Control (OAC).
+The contents of `dist` are uploaded to an S3 bucket.
 
 CloudFront serves the React application over HTTPS.
 
-Default root object:
+The default root object is:
 
-    index.html
+```text
+index.html
+```
 
+---
 
-------------------------------------------------------------
-AWS BACKEND DEPLOYMENT
-------------------------------------------------------------
+## AWS Backend
 
-The FastAPI application runs on an AWS EC2 instance.
+The FastAPI backend runs on an EC2 instance.
 
 Uvicorn listens on:
 
-    0.0.0.0:8000
+```text
+0.0.0.0:8000
+```
 
+The backend is managed using:
 
-The backend is managed using systemd.
+```text
+systemd
+```
 
-Service name:
+Service:
 
-    medreport.service
-
+```text
+medreport.service
+```
 
 This allows the backend to:
 
-- Run continuously in the background.
-- Continue running after the SSH terminal is closed.
-- Automatically start after an EC2 reboot.
-- Automatically restart if the process stops.
+- Run in the background
+- Continue running after SSH is closed
+- Start automatically after EC2 reboot
+- Restart automatically if the process fails
 
+---
 
-Useful commands:
+# Systemd Commands
 
-Check service status:
+Check backend:
 
-    sudo systemctl status medreport
+```bash
+sudo systemctl status medreport
+```
 
+Start:
 
-Start service:
+```bash
+sudo systemctl start medreport
+```
 
-    sudo systemctl start medreport
+Stop:
 
+```bash
+sudo systemctl stop medreport
+```
 
-Stop service:
+Restart:
 
-    sudo systemctl stop medreport
-
-
-Restart service:
-
-    sudo systemctl restart medreport
-
+```bash
+sudo systemctl restart medreport
+```
 
 View live logs:
 
-    sudo journalctl -u medreport -f
-
-
-Check port 8000:
-
-    sudo ss -lntp | grep :8000
-
-
-------------------------------------------------------------
-AWS CLOUDFRONT
-------------------------------------------------------------
-
-CloudFront is used as the public HTTPS entry point.
-
-The distribution serves:
-
-    Frontend:
-    CloudFront -> S3
-
-    API:
-    CloudFront -> EC2 -> FastAPI
-
-
-CloudFront behaviors:
-
-    Default (*)  -> S3
-    /analyze     -> EC2
-    /chat        -> EC2
-
-
-The /analyze and /chat behaviors allow POST requests because these
-endpoints receive user data.
-
-
-------------------------------------------------------------
-AWS WAF
-------------------------------------------------------------
-
-AWS WAF is enabled on the CloudFront distribution to provide protection
-against common web attacks.
-
-The WAF includes AWS-managed protections such as:
-
-- Amazon IP Reputation List
-- Common Rule Set
-- Known Bad Inputs Rule Set
-
-WAF requests that are blocked do not reach the EC2 backend.
-
-Therefore, when troubleshooting a CloudFront 403 response, checking
-AWS WAF sampled requests and logs can help identify the rule responsible
-for blocking the request.
-
-
-------------------------------------------------------------
-SECURITY
-------------------------------------------------------------
-
-The project uses several security measures:
-
-- S3 Block Public Access.
-- CloudFront Origin Access Control for S3.
-- HTTPS through CloudFront.
-- EC2 security-group restrictions.
-- AWS WAF protection.
-- Environment variables for API secrets.
-- Temporary storage for uploaded reports.
-
-The Groq API key must never be committed to GitHub.
-
-The .env file should remain private and should not be tracked by Git.
-
-
-------------------------------------------------------------
-ENVIRONMENT VARIABLES
-------------------------------------------------------------
-
-Required environment variable:
-
-    GROQ_API_KEY
-
-
-Example:
-
-    GROQ_API_KEY=your_groq_api_key_here
-
-
-Never place the real API key directly in source code.
-
-Never commit the real .env file to GitHub.
-
-
-------------------------------------------------------------
-TESTING
-------------------------------------------------------------
-
-Backend health check:
-
-    curl http://127.0.0.1:8000/health
-
-
-Test the deployed API endpoint:
-
-    curl -i -X POST https://dwtdehq0kif0o.cloudfront.net/analyze
-
-
-A POST request without the required file and question should return a
-validation error from FastAPI.
-
-For example:
-
-    422 Unprocessable Content
-
-This confirms that the request successfully reached the FastAPI backend.
-
-
-------------------------------------------------------------
-TROUBLESHOOTING
-------------------------------------------------------------
-
-1. BACKEND IS NOT RESPONDING
-
-Check:
-
-    sudo systemctl status medreport
-
-View logs:
-
-    sudo journalctl -u medreport -f
+```bash
+sudo journalctl -u medreport -f
+```
 
 Check port:
 
-    sudo ss -lntp | grep :8000
+```bash
+sudo ss -lntp | grep :8000
+```
+
+---
+
+# CloudFront Routing
+
+CloudFront routes requests based on the path.
+
+```text
+/ 
+ │
+ └──> S3
+      React Frontend
 
 
-2. FRONTEND SHOWS AN API OR NETWORK ERROR
-
-Check the production API URL:
-
-    VITE_API_URL=https://dwtdehq0kif0o.cloudfront.net
-
-Rebuild:
-
-    npm run build
-
-Upload the new dist contents to S3.
-
-Then invalidate the CloudFront cache if required.
+/analyze
+ │
+ └──> EC2
+      FastAPI
 
 
-3. CLOUDFRONT RETURNS 504
+/chat
+ │
+ └──> EC2
+      FastAPI
+```
+
+This allows the frontend and backend to use the same HTTPS domain.
+
+---
+
+# AWS Security
+
+The deployment uses:
+
+- S3 Block Public Access
+- CloudFront Origin Access Control
+- HTTPS through CloudFront
+- EC2 security groups
+- AWS WAF
+- Environment variables for secrets
+- Temporary report storage
+
+The Groq API key must never be placed directly in source code.
+
+Never commit:
+
+```text
+.env
+```
+
+to GitHub.
+
+---
+
+# Environment Variables
+
+The backend requires:
+
+```text
+GROQ_API_KEY
+```
+
+Example:
+
+```text
+GROQ_API_KEY=your_groq_api_key_here
+```
+
+The frontend uses:
+
+```text
+VITE_API_URL
+```
+
+Local:
+
+```text
+VITE_API_URL=http://127.0.0.1:8000
+```
+
+Production:
+
+```text
+VITE_API_URL=https://dwtdehq0kif0o.cloudfront.net
+```
+
+---
+
+# Testing
+
+## Backend Health
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+Expected:
+
+```json
+{
+  "status": "healthy"
+}
+```
+
+## API Test
+
+```bash
+curl -i -X POST https://dwtdehq0kif0o.cloudfront.net/analyze
+```
+
+Without the required fields, FastAPI should return a validation error.
+
+Example:
+
+```text
+422 Unprocessable Content
+```
+
+This confirms that the request reached the FastAPI backend.
+
+---
+
+# Troubleshooting
+
+## Backend Stops
 
 Check:
 
-- systemd/Uvicorn status.
-- EC2 port 8000.
-- EC2 security-group rules.
-- CloudFront origin configuration.
-- CloudFront behavior configuration.
-- EC2 public DNS/address.
+```bash
+sudo systemctl status medreport
+```
 
+View logs:
 
-4. CLOUDFRONT RETURNS 403
+```bash
+sudo journalctl -u medreport -f
+```
 
-If FastAPI logs show no corresponding request, the request may have been
-blocked by CloudFront or AWS WAF before reaching EC2.
+---
+
+## Port 8000 Not Listening
+
+Run:
+
+```bash
+sudo ss -lntp | grep :8000
+```
+
+If nothing appears:
+
+```bash
+sudo systemctl restart medreport
+```
+
+---
+
+## CloudFront 504
 
 Check:
 
-- CloudFront behavior.
-- Allowed HTTP methods.
-- AWS WAF sampled requests.
-- AWS WAF rules and actions.
-- CloudFront cache/invalidation state.
+```text
+EC2
+ ↓
+Uvicorn
+ ↓
+FastAPI :8000
+```
 
+Also check:
 
-5. PDF UPLOAD IS BLOCKED
+- EC2 security group
+- CloudFront origin
+- CloudFront behavior
+- EC2 public DNS
+- Backend service status
 
-If an empty POST reaches FastAPI but a multipart PDF upload returns a
-CloudFront 403, investigate AWS WAF rules that inspect request bodies.
+---
 
-Use WAF sampled requests/logging to identify the exact rule responsible
-before changing or disabling a security rule.
+## CloudFront 403
 
+If the request does not appear in FastAPI logs, the request may be blocked
+before reaching EC2.
 
-6. HUGGING FACE WARNING
+Check:
 
-SentenceTransformers may display a warning about unauthenticated requests
-to the Hugging Face Hub.
+- CloudFront behavior
+- Allowed HTTP methods
+- AWS WAF
+- WAF sampled requests
+- WAF rules
+- CloudFront cache
 
-A Hugging Face token is not required for the application when the required
-model files are already available or can be downloaded.
+---
 
-The SentenceTransformer model itself runs locally on the backend after
-being loaded.
+## Frontend API Error
 
+Check:
 
-------------------------------------------------------------
-IMPORTANT DEPLOYMENT NOTE
-------------------------------------------------------------
+```text
+VITE_API_URL
+```
 
-The production frontend must be rebuilt whenever VITE_API_URL changes.
+For production it should be:
 
-For example:
+```text
+https://dwtdehq0kif0o.cloudfront.net
+```
 
-    VITE_API_URL=https://dwtdehq0kif0o.cloudfront.net
+After changing it:
 
-Then:
+```bash
+npm run build
+```
 
-    npm run build
+Upload the new `dist` contents to S3.
 
+If necessary, invalidate CloudFront:
 
-After building, upload the updated contents of:
+```text
+/*
+```
 
-    frontend/dist/
+---
 
-to S3.
+# Deployment Flow
 
-If CloudFront continues serving an older version, create an invalidation:
+The overall production flow is:
 
-    /*
+```text
+Developer
+    │
+    ▼
+GitHub
+    │
+    ├───────────────┐
+    │               │
+    ▼               ▼
+Frontend          Backend
+    │               │
+    ▼               ▼
+    S3              EC2
+    │               │
+    └───────┬───────┘
+            │
+            ▼
+        CloudFront
+            │
+            ▼
+          Users
+```
 
+---
 
-------------------------------------------------------------
-PROJECT ARCHITECTURE SUMMARY
-------------------------------------------------------------
+# Complete AI Flow
 
-Frontend:
+```text
+User uploads PDF
+       │
+       ▼
+React Frontend
+       │
+       ▼
+CloudFront
+       │
+       ▼
+FastAPI
+       │
+       ▼
+PDF Processing
+       │
+       ├── Parse
+       ├── Validate
+       └── Summary
+       │
+       ▼
+User Question
+       │
+       ▼
+SentenceTransformer
+       │
+       ▼
+Question Embedding
+       │
+       ▼
+FAISS
+       │
+       ▼
+Relevant Medical Knowledge
+       │
+       ├───────────────┐
+       │               │
+       ▼               ▼
+Report Context    Retrieved Context
+       │               │
+       └───────┬───────┘
+               │
+               ▼
+            Groq LLM
+               │
+               ▼
+          Safety Check
+               │
+               ▼
+          Final Answer
+               │
+               ▼
+         React Frontend
+               │
+               ▼
+              User
+```
 
-    React + Vite
-          |
-          v
-    AWS S3 + CloudFront
+---
 
+# Important Design Decisions
 
-Backend:
+## Why FAISS?
 
-    AWS EC2
-       |
-       v
-    Uvicorn
-       |
-       v
-    FastAPI
+FAISS provides efficient similarity search over vector embeddings and is
+suitable for the project's local medical knowledge retrieval.
 
+## Why SentenceTransformer?
 
-RAG:
+SentenceTransformer converts text into semantic vector representations.
 
-    User Question
-         |
-         v
-    SentenceTransformer
-         |
-         v
-    Embedding
-         |
-         v
-    FAISS
-         |
-         v
-    Relevant Knowledge
-         |
-         v
-    Groq LLM
-         |
-         v
-    Safety Checker
-         |
-         v
-    Final Answer
+The same model is used for:
 
+```text
+Medical Knowledge → Embeddings
+User Question     → Embedding
+```
 
-Complete application:
+This allows FAISS to compare the question with stored knowledge.
 
-    React
-      |
-      v
-    CloudFront
-      |
-      +----------------------+
-      |                      |
-      v                      v
-     S3                    EC2
-  Frontend              FastAPI
-                           |
-                           +--> PDF Processing
-                           |
-                           +--> SentenceTransformer
-                           |
-                           +--> FAISS
-                           |
-                           +--> Groq
-                           |
-                           +--> Safety Checker
-                           |
-                           v
-                         Answer
+## Why Groq?
 
+Groq provides the LLM used for generating the final natural-language answer.
 
-------------------------------------------------------------
-FUTURE IMPROVEMENTS
-------------------------------------------------------------
+## Why RAG?
 
-Possible future improvements include:
+RAG allows the LLM to use retrieved medical knowledge rather than relying
+only on its pretrained knowledge.
 
-- User authentication and authorization.
-- Persistent database for chat sessions.
-- Secure object storage for uploaded reports.
-- Streaming LLM responses.
-- More advanced medical-document parsing.
-- Support for additional medical report formats.
-- RAG source/citation display.
-- Automated RAG evaluation.
-- Improved monitoring and logging.
-- CI/CD deployment pipeline.
-- Infrastructure as code using Terraform or AWS CDK.
-- Stronger privacy and compliance controls.
+The basic idea is:
 
+```text
+Retrieve relevant information
+            +
+Generate answer using that information
+            =
+RAG
+```
 
-------------------------------------------------------------
-MEDICAL SAFETY NOTICE
-------------------------------------------------------------
+---
+
+# Security and Privacy
+
+This application handles medical information, so production systems require
+strong security and privacy controls.
+
+Recommended improvements include:
+
+- User authentication
+- Authorization
+- Encryption
+- Secure secret management
+- Secure report storage
+- File-size limits
+- File-type validation
+- Malware scanning
+- Access control
+- Audit logging
+- Rate limiting
+- Monitoring
+- Data retention policies
+- Appropriate privacy and regulatory compliance
+
+Do not upload real patient information to public repositories.
+
+---
+
+# Future Improvements
+
+Possible future improvements:
+
+- User authentication
+- Persistent database
+- Persistent chat history
+- Secure report storage
+- Streaming responses
+- More medical report types
+- Better PDF parsing
+- RAG source citations
+- RAG evaluation
+- Automated testing
+- CI/CD pipeline
+- Terraform or AWS CDK
+- Monitoring and alerts
+- Improved privacy controls
+
+---
+
+# Medical Disclaimer
 
 MedReport AI is an AI-assisted informational application.
 
-The generated information should not be considered a medical diagnosis,
-prescription, or substitute for professional medical advice.
+The results generated by the system should not be considered a medical
+diagnosis, prescription, or substitute for professional medical advice.
 
 Users should consult a qualified healthcare professional for diagnosis,
 treatment decisions, or interpretation of serious medical conditions.
 
+---
 
-------------------------------------------------------------
-AUTHOR
-------------------------------------------------------------
+# Author
 
-MedReport AI
-Full-Stack Medical Report Analysis and RAG Chatbot
+**MedReport AI**
 
-
-------------------------------------------------------------
-LICENSE
-------------------------------------------------------------
-
-Add the project's license information here if applicable.
+Full-Stack Medical Report Analysis and RAG Application
