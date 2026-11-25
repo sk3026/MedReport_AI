@@ -1,9 +1,9 @@
 fastapi
 uvicorn[standard]
 python-multipart
-pymupdf
+PyMuPDF==1.25.3
 sentence-transformers
-faiss-cpu
+faiss-cpu==1.10.0
 numpy
 langchain-text-splitters
 groq
