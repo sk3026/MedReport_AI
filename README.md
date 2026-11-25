@@ -202,10 +202,7 @@ Final Response
 ### Document Processing
 - PyMuPDF
 
-### Deployment
-- AWS (Amazon S3, Amazon CloudFront, Amazon EC2)
 
----
 
 ## Project Structure
 
@@ -319,23 +316,7 @@ Checks generated responses against safety guardrails before returning them to th
 
 Supported upload format: `PDF`
 
----
 
-## Environment Variables
-
-Create a `.env` file based on `.env.example` (do not commit `.env` to source control):
-
-```env
-GROQ_API_KEY=your_groq_api_key
-```
-
-Frontend production configuration:
-
-```env
-VITE_API_URL=https://<your-production-domain>
-```
-
----
 
 ## Local Development
 
