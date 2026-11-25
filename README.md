@@ -446,13 +446,3 @@ curl http://localhost:8000/health
 MedReport AI provides AI-generated informational responses based on uploaded documents and retrieved knowledge. It is not intended to diagnose medical conditions, prescribe medication, replace healthcare professionals, or make clinical decisions. Users should consult a qualified healthcare professional for medical diagnosis and treatment.
 
 ---
-
-## License
-
-MIT License
-
----
-
-## Author
-
-**MedReport AI** — AI-powered medical report analysis and RAG application.
