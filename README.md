@@ -1,208 +1,477 @@
 # MedReport AI
 
-AI-powered medical lab report assistant built with Retrieval-Augmented Generation (RAG), FastAPI, and React.
+AI-powered medical report analysis using Retrieval-Augmented Generation (RAG).
 
-MedReport AI processes uploaded medical PDF reports, extracts and validates lab metrics, retrieves reference medical knowledge via FAISS, and generates source-grounded explanations with safety checks.
+MedReport AI is a full-stack application that processes medical PDF reports, retrieves relevant medical knowledge, and generates context-aware responses using a large language model.
 
-> **Medical Disclaimer:** Intended for educational and informational purposes only. Not a medical diagnostic tool and must not replace professional medical advice, diagnosis, or treatment.
+The system is designed with a modular backend, React frontend, vector-based retrieval, and REST API architecture.
 
----
-
-## Key Features
-
-- **PDF Extraction & Parsing:** Extracts text with PyMuPDF, structures lab values, validates report integrity, and generates concise summaries.
-- **Supported Lab Panels:** CBC, Glucose, Lipid Profile, Liver Function (LFT), Kidney Function (KFT), and Thyroid panels (PDF format).
-- **Local Semantic Embeddings:** Encodes queries and reference documents into 384-dimensional vectors using `all-MiniLM-L6-v2` without external embedding API calls.
-- **FAISS Vector Retrieval:** Performs similarity search over pre-indexed medical knowledge (`vectorstore/medical_knowledge.index`).
-- **Multi-Turn Follow-Up Chat & Safety Guardrails:** Generates context-aware answers via Groq LLM and runs output safety verification before returning responses.
+> **Medical Disclaimer:** MedReport AI is intended for educational and informational purposes. It is not a medical diagnostic system and should not be used as a substitute for professional medical advice.
 
 ---
 
-## System & RAG Architecture
+## Overview
 
-### Application & Pipeline Architecture
+MedReport AI combines:
+
+- Medical PDF processing
+- Report validation
+- Report summarization
+- Semantic search
+- Local vector embeddings
+- FAISS vector retrieval
+- Retrieval-Augmented Generation
+- Large language model response generation
+- Response safety checking
+- React-based user interface
+- FastAPI REST API
+
+The system follows this general pipeline:
 
 ```text
-┌──────────────────────────────────────────────────────────────────────┐
-│                        React + Vite Frontend                         │
-│        PDF Report Upload  •  Report Summary  •  Follow-Up Chat       │
-└──────────────────────────────────┬───────────────────────────────────┘
-                                   │ HTTPS / REST
-┌──────────────────────────────────▼───────────────────────────────────┐
-│                      FastAPI Application Layer                       │
-│            GET /health   •   POST /analyze   •   POST /chat          │
-└───────────┬──────────────────────┬──────────────────────┬────────────┘
-            │                      │                      │
-            ▼                      ▼                      ▼
-┌───────────────────────┐ ┌─────────────────┐ ┌────────────────────────┐
-│  Ingestion Pipeline   │ │   RAG Engine    │ │     Safety Layer       │
-│  - PyMuPDF Extraction │ │ - MiniLM-L6-v2  │ │ - Response Guardrails  │
-│  - Test Value Parser  │ │ - FAISS Search  │ │ - Medical Disclaimer   │
-│  - Validator & Summary│ │ - Groq LLM API  │ │                        │
-└───────────────────────┘ └─────────────────┘ └────────────────────────┘
+User
+ │
+ ▼
+React Frontend
+ │
+ ▼
+FastAPI API
+ │
+ ├── PDF Processing
+ │
+ ├── Report Validation
+ │
+ ├── Report Summary
+ │
+ ├── Question Embedding
+ │
+ ├── FAISS Retrieval
+ │
+ ├── Context Preparation
+ │
+ ├── LLM Generation
+ │
+ └── Safety Check
+ │
+ ▼
+Final Response
 ```
 
-### Offline Indexing & Online Query Flow
+---
+
+## Architecture
+
+### Application Architecture
 
 ```text
-[Offline Knowledge Indexing]
-Medical Knowledge ──► LangChain Splitter ──► all-MiniLM-L6-v2 (384-d) ──► FAISS Index (.index + .pkl)
-
-[Online Query & Response]
-Uploaded PDF ──► PyMuPDF Extract ──► Parser & Validator ──► Report Summary ─┐
-                                                                            ├──► Groq LLM ──► Safety Check ──► Final Answer
-User Question ──► all-MiniLM-L6-v2 (384-d) ──► FAISS Search ──► Context ────┘
+                         ┌──────────────┐
+                         │     User     │
+                         └──────┬───────┘
+                                │
+                                ▼
+                      ┌──────────────────┐
+                      │ React Frontend   │
+                      └────────┬─────────┘
+                               │
+                               │ HTTPS / REST
+                               ▼
+                      ┌──────────────────┐
+                      │   FastAPI API    │
+                      └────────┬─────────┘
+                               │
+                ┌──────────────┼──────────────┐
+                │              │              │
+                ▼              ▼              ▼
+         PDF Processing    RAG Pipeline   Safety Layer
+                               │
+                               ▼
+                       ┌──────────────┐
+                       │ Sentence     │
+                       │ Transformer  │
+                       └──────┬───────┘
+                              │
+                              ▼
+                       ┌──────────────┐
+                       │    FAISS     │
+                       │ Vector Store │
+                       └──────┬───────┘
+                              │
+                              ▼
+                      Retrieved Context
+                              │
+                              ▼
+                       ┌──────────────┐
+                       │    LLM API   │
+                       └──────┬───────┘
+                              │
+                              ▼
+                       Generated Answer
 ```
 
-### AWS Deployment Architecture
+---
+
+## RAG Architecture
+
+The application uses Retrieval-Augmented Generation instead of relying only on the LLM's pretrained knowledge.
+
+### Knowledge Indexing
 
 ```text
-                        Internet
-                           │
-                           ▼
-                   Amazon CloudFront
-                           │
-             ┌─────────────┴─────────────┐
-             │                           │
-             ▼                           ▼
-     Static Frontend               Backend API
-       (Amazon S3)                 (Amazon EC2)
-                                         │
-                             ┌───────────┼───────────┐
-                             │           │           │
-                             ▼           ▼           ▼
-                      all-MiniLM-L6    FAISS      Groq API
+Medical Knowledge
+       │
+       ▼
+    Chunking
+       │
+       ▼
+  Text Chunks
+       │
+       ▼
+SentenceTransformer
+       │
+       ▼
+  Embeddings
+       │
+       ▼
+     FAISS
+       │
+       ▼
+Vector Index
+```
+
+### Question Processing
+
+```text
+User Question
+       │
+       ▼
+SentenceTransformer
+       │
+       ▼
+Question Embedding
+       │
+       ▼
+FAISS Similarity Search
+       │
+       ▼
+Relevant Knowledge
+       │
+       ▼
+Context
+```
+
+### Response Generation
+
+```text
+User Question
+      +
+Uploaded Report Context
+      +
+Retrieved Medical Knowledge
+      │
+      ▼
+     LLM
+      │
+      ▼
+Safety Check
+      │
+      ▼
+Final Response
 ```
 
 ---
 
 ## Technology Stack
 
-| Layer | Technologies |
-| :--- | :--- |
-| **Frontend** | React, Vite, JavaScript, Axios |
-| **Backend** | Python 3.12, FastAPI, Uvicorn |
-| **AI / RAG** | SentenceTransformers (`all-MiniLM-L6-v2`), FAISS, LangChain Text Splitters, Groq API |
-| **Document Processing** | PyMuPDF (`fitz`) |
-| **Deployment** | AWS (S3, CloudFront, EC2) |
+### Frontend
+- React
+- Vite
+- JavaScript
+- Axios
+
+### Backend
+- Python
+- FastAPI
+- Uvicorn
+
+### AI / RAG
+- SentenceTransformers (`all-MiniLM-L6-v2`)
+- FAISS
+- LangChain text splitters
+- Groq API
+
+### Document Processing
+- PyMuPDF
+
+### Deployment
+- AWS (Amazon S3, Amazon CloudFront, Amazon EC2)
 
 ---
 
-## Project Structure & Backend Modules
+## Project Structure
 
 ```text
 MedReport_AI/
+│
 ├── backend/
 │   ├── api/
-│   │   └── main.py                 # REST endpoints (/health, /analyze, /chat)
+│   │   └── main.py
+│   │
 │   ├── ingestion/
-│   │   ├── pdf.py                  # PyMuPDF text extraction
-│   │   ├── parser.py               # Structured lab metric parsing
-│   │   ├── validator.py            # Report format & field validation
-│   │   └── summary.py              # Report summary generation
+│   │   ├── parser.py
+│   │   ├── pdf.py
+│   │   ├── summary.py
+│   │   └── validator.py
+│   │
 │   ├── knowledge/
-│   │   ├── documents.py            # Knowledge base document loader
-│   │   ├── chunking.py             # Text splitting utilities
-│   │   ├── embeddings.py           # SentenceTransformer (384-d) wrapper
-│   │   └── vectorstore.py          # FAISS index creation & persistence
+│   │   ├── chunking.py
+│   │   ├── documents.py
+│   │   ├── embeddings.py
+│   │   └── vectorstore.py
+│   │
 │   ├── retrieval/
-│   │   ├── search.py               # FAISS similarity search
-│   │   ├── test_matcher.py         # Lab test matching logic
-│   │   ├── context.py              # Context assembly
-│   │   └── context_formatter.py    # Prompt context formatting
+│   │   ├── search.py
+│   │   ├── context.py
+│   │   ├── context_formatter.py
+│   │   └── test_matcher.py
+│   │
 │   ├── generation/
-│   │   ├── prompts.py              # System & RAG prompt templates
-│   │   ├── llm.py                  # Groq LLM integration
-│   │   └── response.py             # Output structuring
+│   │   ├── llm.py
+│   │   ├── prompts.py
+│   │   └── response.py
+│   │
 │   ├── safety/
-│   │   └── checker.py              # Response safety verification
-│   ├── config.py                   # Centralized paths & RAG parameters
-│   ├── models.py                   # Pydantic request/response schemas
-│   └── pipeline.py                 # End-to-end RAG orchestration
+│   │   └── checker.py
+│   │
+│   ├── config.py
+│   ├── models.py
+│   └── pipeline.py
+│
 ├── data/
-│   ├── knowledge_base/             # Reference medical knowledge documents
-│   ├── processed/                  # Processed chunks & metadata
-│   └── reports/temp/               # Transient uploaded report storage
+│   ├── knowledge_base/
+│   ├── processed/
+│   └── reports/
+│       └── temp/
+│
 ├── vectorstore/
-│   ├── medical_knowledge.index     # Pre-built FAISS vector index
-│   └── knowledge_documents.pkl     # Serialized document chunks
+│   ├── medical_knowledge.index
+│   └── knowledge_documents.pkl
+│
 ├── frontend/
-│   ├── src/App.jsx                 # React application root
+│   ├── src/
+│   │   └── App.jsx
 │   ├── public/
-│   └── package.json
-├── tests/                          # Automated backend test suite
+│   ├── package.json
+│   └── dist/
+│
+├── tests/
+│
 ├── requirements.txt
 ├── .env.example
-└── README.md
+├── .gitignore
+├── README.md
+└── package.json
 ```
 
 ---
 
-## API Reference
+## Backend Modules
 
-| Method | Endpoint | Content-Type | Description |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/health` | `application/json` | Service health check (`{"status": "healthy"}`) |
-| `POST` | `/analyze` | `multipart/form-data` | Accepts `file` (PDF) and `question`; returns summary & grounded answer |
-| `POST` | `/chat` | `application/json` | Handles follow-up questions against the active analysis session |
+### API (`backend/api/`)
+Exposes the application's REST endpoints (`main.py`) and connects the frontend with the processing pipeline.
+
+### Ingestion (`backend/ingestion/`)
+Processes uploaded medical PDF reports through extraction, parsing, validation, and summary generation.
+
+### Knowledge (`backend/knowledge/`)
+Prepares and manages medical reference documents via chunking, embedding generation, and FAISS vectorstore management.
+
+### Retrieval (`backend/retrieval/`)
+Performs semantic similarity search from the FAISS vector index and formats matched lab test chunks into prompt context.
+
+### Generation (`backend/generation/`)
+Communicates with the Groq LLM using the user question, parsed report context, retrieved medical knowledge, and prompt templates.
+
+### Safety (`backend/safety/`)
+Checks generated responses against safety guardrails before returning them to the client.
 
 ---
 
-## Local Development Setup
+## Embeddings & Vector Store
 
-### 1. Clone & Configure Environment
-```bash
-git clone [https://github.com/sk3026/MedReport_AI.git](https://github.com/sk3026/MedReport_AI.git)
-cd MedReport_AI
-cp .env.example .env
-```
-Add your Groq API key to `.env`:
+- **Embedding Model:** `all-MiniLM-L6-v2` (384-dimensional vectors) running locally inside the backend environment without an external embedding API.
+- **Vector Store:** FAISS similarity search over:
+  ```text
+  vectorstore/
+  ├── medical_knowledge.index
+  └── knowledge_documents.pkl
+  ```
+
+---
+
+## Supported Reports
+
+- CBC
+- Glucose
+- Lipid Profile
+- Liver Function
+- Kidney Function
+- Thyroid
+
+Supported upload format: `PDF`
+
+---
+
+## Environment Variables
+
+Create a `.env` file based on `.env.example` (do not commit `.env` to source control):
+
 ```env
-GROQ_API_KEY=your_groq_api_key_here
+GROQ_API_KEY=your_groq_api_key
 ```
 
-### 2. Start the Backend
-Run from the **repository root** (`MedReport_AI/`):
-```bash
-python -m venv .venv
-.venv\Scripts\activate        # Windows (use `source .venv/bin/activate` on macOS/Linux)
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-python -m uvicorn backend.api.main:app --reload --port 8000
-```
-API docs are available at `http://localhost:8000/docs`.
+Frontend production configuration:
 
-### 3. Start the Frontend
-Open a second terminal from the repository root:
+```env
+VITE_API_URL=https://<your-production-domain>
+```
+
+---
+
+## Local Development
+
+### Backend
+
+1. Create and activate a virtual environment from the repository root:
+   ```bash
+   python -m venv .venv
+   .venv\Scripts\activate        # Windows (use `source .venv/bin/activate` on macOS/Linux)
+   ```
+
+2. Install dependencies:
+   ```bash
+   python -m pip install -r requirements.txt
+   ```
+
+3. Start the API:
+   ```bash
+   python -m uvicorn backend.api.main:app --host 0.0.0.0 --port 8000 --reload
+   ```
+   The backend will be available at `http://localhost:8000`.
+
+### Frontend
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-Open the app at `http://localhost:5173`.
 
 ---
 
-## Production Build & Testing
+## Production Build & Deployment
 
-- **Build Frontend:**
-  ```bash
-  cd frontend && npm run build   # Outputs static bundle to frontend/dist/
-  ```
-- **Run Production API:**
-  ```bash
-  python -m uvicorn backend.api.main:app --host 0.0.0.0 --port 8000
-  ```
-- **Run Tests & Health Check:**
-  ```bash
-  pytest
-  curl http://localhost:8000/health
-  ```
+### Build Frontend
+```bash
+cd frontend
+npm run build
+```
+Static production files are generated in `frontend/dist/`.
+
+### Start Backend
+```bash
+python -m uvicorn backend.api.main:app --host 0.0.0.0 --port 8000
+```
+
+### AWS Deployment Architecture
+
+```text
+                         Internet
+                            │
+                            ▼
+                     CloudFront
+                            │
+              ┌─────────────┴─────────────┐
+              │                           │
+              ▼                           ▼
+         Static Frontend             Backend API
+              │                           │
+              ▼                           ▼
+             S3                         EC2
+                                          │
+                              ┌───────────┼───────────┐
+                              │           │           │
+                              ▼           ▼           ▼
+                       Embedding Model   FAISS      LLM API
+```
+
+---
+
+## Configuration
+
+Application settings are centralized in `backend/config.py`, including data/knowledge-base paths, vectorstore location, chunk size/overlap, retrieval count, supported report types, and file formats.
+
+---
+
+## Testing & Monitoring
+
+Run backend tests:
+```bash
+pytest
+```
+
+Verify API health:
+```bash
+curl http://localhost:8000/health
+```
 
 ---
 
 ## Security & Data Handling
 
-- **Transient Report Processing:** Uploaded PDFs in `data/reports/temp/` are excluded from version control and should be purged after session completion in production.
-- **Sanitized Logging:** Operational logs capture request status and errors without recording patient identifiers, raw report text, or API keys.
-- **Environment Isolation:** Secrets (`GROQ_API_KEY`, `VITE_API_URL`) are injected via environment variables and never committed to source control.
+- **Transport & Secrets:** Use HTTPS in production and inject API keys via environment variables rather than source control.
+- **Transient Uploads:** Avoid unnecessary persistence of uploaded reports in `data/reports/temp/` and restrict file access.
+- **Sanitized Logging:** Log operational events (`Request received`, `Request completed`, `Processing failed`, `External API failure`) without logging patient names, medical record numbers, raw report text, or API keys.
+
+---
+
+## Development vs Production
+
+| Area | Development | Production |
+| :--- | :--- | :--- |
+| Frontend | Vite development server | Production static build |
+| Backend | Uvicorn (`--reload`) | Uvicorn / production server |
+| Configuration | `.env` | Secure environment variables |
+| HTTPS | Optional | Required |
+| Logs | Console | Centralized logging |
+| Storage | Local | Managed storage where required |
+| Scaling | Single instance | Multiple instances if required |
+| Monitoring | Basic | Application and infrastructure monitoring |
+| Secrets | Local environment | Secure secret management |
+
+---
+
+## Future Enhancements
+
+- User authentication and authorization
+- Persistent conversation and secure report storage
+- Streaming responses and RAG citations
+- Additional medical report formats and improved extraction
+- Retrieval evaluation and automated CI/CD
+
+---
+
+## Medical Disclaimer
+
+MedReport AI provides AI-generated informational responses based on uploaded documents and retrieved knowledge. It is not intended to diagnose medical conditions, prescribe medication, replace healthcare professionals, or make clinical decisions. Users should consult a qualified healthcare professional for medical diagnosis and treatment.
+
+---
+
+## License
+
+MIT License
+
+---
+
+## Author
+
+**MedReport AI** — AI-powered medical report analysis and RAG application.
